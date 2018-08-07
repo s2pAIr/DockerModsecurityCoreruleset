@@ -157,12 +157,6 @@ RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/crs-setup.conf.example /usr/l
 RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf.example /usr/local/nginx/conf/owasp-modsecurity-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
 RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example /usr/local/nginx/conf/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 
-# Samos replace include.conf and modsecurity.conf file
-RUN rm /etc/nginx/modsecurity.d/modsecurity.conf
-RUN rm /etc/nginx/modsecurity.d/include.conf
-COPY --from=modsecurity-build /opt/insideModsec/include.conf /etc/nginx/modsecurity.d/include.conf
-COPY --from=modsecurity-build /opt/insideModsec/modsecurity.conf /etc/nginx/modsecurity.d/modsecurity.conf
-
 # NGiNX Create log dirs
 RUN mkdir -p /var/log/nginx/
 RUN touch /var/log/nginx/access.log
@@ -175,6 +169,12 @@ RUN echo "include /etc/nginx/modsecurity.d/modsecurity.conf" > /etc/nginx/modsec
 COPY --from=modsecurity-build /opt/ModSecurity/modsecurity.conf-recommended /etc/nginx/modsecurity.d
 RUN cd /etc/nginx/modsecurity.d && \
     mv modsecurity.conf-recommended modsecurity.conf
+
+# Samos replace include.conf and modsecurity.conf file
+RUN rm /etc/nginx/modsecurity.d/modsecurity.conf
+RUN rm /etc/nginx/modsecurity.d/include.conf
+COPY --from=modsecurity-build /opt/DockerModsecurityCoreruleset/insideModsec/include.conf /etc/nginx/modsecurity.d/include.conf
+COPY --from=modsecurity-build /opt/DockerModsecurityCoreruleset/insideModsec/modsecurity.conf /etc/nginx/modsecurity.d/modsecurity.conf
 
 EXPOSE 80
 
