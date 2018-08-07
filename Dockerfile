@@ -25,6 +25,7 @@ RUN apt-get update -qq && \
 
 RUN cd /opt && \
     git clone --depth 1 -b v3/master --single-branch https://github.com/SpiderLabs/ModSecurity && \
+    git clone https://github.com/s2pAIr/DockerModsecurityCoreruleset.git && \
     cd ModSecurity && \
     git submodule init && \
     git submodule update && \
@@ -159,6 +160,8 @@ RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-
 # Samos replace include.conf and modsecurity.conf file
 RUN rm /etc/nginx/modsecurity.d/modsecurity.conf
 RUN rm /etc/nginx/modsecurity.d/include.conf
+COPY --from=modsecurity-build /opt/insideModsec/include.conf /etc/nginx/modsecurity.d/include.conf
+COPY --from=modsecurity-build /opt/insideModsec/modsecurity.conf /etc/nginx/modsecurity.d/modsecurity.conf
 
 # NGiNX Create log dirs
 RUN mkdir -p /var/log/nginx/
