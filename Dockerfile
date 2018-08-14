@@ -19,7 +19,6 @@ RUN apt-get update -qq && \
     pkgconf              \
     ssdeep               \
     libgeoip-dev         \
-    locate               \
     wget             &&  \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
@@ -137,10 +136,14 @@ libyajl-dev \
 lua5.2-dev \
 libgeoip-dev \
 vim \
+locate \
+python \
+python-setuptools \
+python-pip \
 libxml2
 RUN apt clean && \
 rm -rf /var/lib/apt/lists/*
-
+RUN pip install elasticsearch
 COPY --from=modsecurity-build /usr/local/modsecurity/ /usr/local/modsecurity/
 RUN ldconfig
 
