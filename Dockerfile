@@ -31,9 +31,8 @@ RUN cd /opt && \
     ./build.sh && \
     ./configure && \
     make && \
-    make install
-
-RUN strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so*
+    make install && \
+    strip /usr/local/modsecurity/bin/* /usr/local/modsecurity/lib/*.a /usr/local/modsecurity/lib/*.so*
 
 
 FROM debian:stretch-slim AS nginx-build
@@ -100,21 +99,19 @@ RUN cd /opt/nginx-"$NGINX_VERSION" && \
         --add-module=/opt/ModSecurity-nginx \
         --with-cc-opt='-g -O2 -specs=/usr/share/dpkg/no-pie-compile.specs -fstack-protector-strong -Wformat -Werror=format-security -Wp,-D_FORTIFY_SOURCE=2 -fPIC' \
         --with-ld-opt='-specs=/usr/share/dpkg/no-pie-link.specs -Wl,-z,relro -Wl,-z,now -Wl,--as-needed -pie' \
-        --with-http_dav_module
+        --with-http_dav_module && \
+    make && \
+    make install && \
+    make modules
 
-RUN cd /opt/nginx-"$NGINX_VERSION" && \
-make && \
-make install && \
-make modules
-
-RUN mkdir -p /var/log/nginx/
-RUN touch /var/log/nginx/access.log
-RUN touch /var/log/nginx/error.log
+RUN mkdir -p /var/log/nginx/ && \
+    touch /var/log/nginx/access.log && \
+    touch /var/log/nginx/error.log
 
 # Samos clone core rule set
-RUN mkdir /usr/local/nginx/conf && \
-cd /usr/local/nginx/conf && \
-git clone https://github.com/SpiderLabs/owasp-modsecurity-crs
+RUN mkdir -p /usr/local/nginx/conf && \
+    cd /usr/local/nginx/conf && \
+    git clone -b v3.0/master https://github.com/SpiderLabs/owasp-modsecurity-crs
 
 EXPOSE 80
 
@@ -137,13 +134,9 @@ lua5.2-dev \
 libgeoip-dev \
 vim \
 locate \
-python \
-python-setuptools \
-python-pip \
 libxml2
 RUN apt clean && \
 rm -rf /var/lib/apt/lists/*
-RUN pip install elasticsearch
 COPY --from=modsecurity-build /usr/local/modsecurity/ /usr/local/modsecurity/
 RUN ldconfig
 
@@ -161,9 +154,9 @@ RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/rules/REQUEST-900-EXCLUSION-R
 RUN mv /usr/local/nginx/conf/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf.example /usr/local/nginx/conf/owasp-modsecurity-crs/rules/RESPONSE-999-EXCLUSION-RULES-AFTER-CRS.conf
 
 # NGiNX Create log dirs
-RUN mkdir -p /var/log/nginx/
-RUN touch /var/log/nginx/access.log
-RUN touch /var/log/nginx/error.log
+RUN mkdir -p /var/log/nginx/ && \
+    touch /var/log/nginx/access.log && \
+    touch /var/log/nginx/error.log
 
 
 RUN sed -i '38i modsecurity on;\n\tmodsecurity_rules_file /etc/nginx/modsecurity.d/include.conf;' /etc/nginx/nginx.conf
@@ -174,8 +167,8 @@ RUN cd /etc/nginx/modsecurity.d && \
     mv modsecurity.conf-recommended modsecurity.conf
 
 # Samos replace include.conf and modsecurity.conf file
-RUN rm /etc/nginx/modsecurity.d/modsecurity.conf
-RUN rm /etc/nginx/modsecurity.d/include.conf
+RUN rm /etc/nginx/modsecurity.d/modsecurity.conf && \
+    rm /etc/nginx/modsecurity.d/include.conf
 COPY --from=modsecurity-build /opt/DockerModsecurityCoreruleset/insideModsec/include.conf /etc/nginx/modsecurity.d/include.conf
 COPY --from=modsecurity-build /opt/DockerModsecurityCoreruleset/insideModsec/modsecurity.conf /etc/nginx/modsecurity.d/modsecurity.conf
 
